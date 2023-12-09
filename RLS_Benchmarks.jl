@@ -1,4 +1,4 @@
-using LinearAlgebra, JuMP, Gurobi, Statistics, StatsBase, Distributions
+using LinearAlgebra, JuMP, SCS, Statistics, StatsBase, Distributions
 using Mosek, MosekTools, IterativeSolvers, Random, Distributed
 
 
@@ -31,8 +31,9 @@ end
 
 function rls_11(A,b,ρ)
     n = size(A)[1]
-    m1 = Model(Gurobi.Optimizer)
-    set_optimizer_attribute(m1, "OutputFlag", 0)
+    m1 = Model(SCS.Optimizer)
+    io = open("/dev/null", "w")  # On Unix-like systems, redirect to null device
+    redirect_stdout(io)
     @variable(m1, x[1:n])
     @variable(m1, w[1:n])
     @variable(m1, u[1:n])
@@ -42,6 +43,7 @@ function rls_11(A,b,ρ)
     @constraint(m1, x .>= -u)
     @objective(m1, Min, ones(n)'*w + ρ*ones(n)'*u)
     optimize!(m1)
+    close(io)
     res = JuMP.value.(x)
     return res
 end
@@ -49,8 +51,9 @@ end
 
 function rls_21(A,b,ρ)
     n = size(A)[1]
-    m1 = Model(Gurobi.Optimizer)
-    set_optimizer_attribute(m1, "OutputFlag", 0)
+    m1 = Model(SCS.Optimizer)
+    io = open("/dev/null", "w")  # On Unix-like systems, redirect to null device
+    redirect_stdout(io)
     @variable(m1, x[1:n])
     @variable(m1, t)
     @variable(m1, u[1:n])
@@ -59,14 +62,16 @@ function rls_21(A,b,ρ)
     @constraint(m1, x .>= -u)
     @objective(m1, Min, t + ρ*ones(n)'*u)
     optimize!(m1)
+    close(io)
     res = JuMP.value.(x)
     return res
 end
 
 function rls_22(A,b,ρ)
     n = size(A)[1]
-    m1 = Model(Gurobi.Optimizer)
-    set_optimizer_attribute(m1, "OutputFlag", 0)
+    m1 = Model(SCS.Optimizer)
+    io = open("/dev/null", "w")  # On Unix-like systems, redirect to null device
+    redirect_stdout(io)
     @variable(m1, x[1:n])
     @variable(m1, t)
     @variable(m1, s)
@@ -74,6 +79,7 @@ function rls_22(A,b,ρ)
     @constraint(m1, [s; x] in SecondOrderCone())
     @objective(m1, Min, t + ρ*s)
     optimize!(m1)
+    close(io)
     res = JuMP.value.(x)
     return res
 end
